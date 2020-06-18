@@ -1,0 +1,67 @@
+#include<WiFi.h>
+#include <FirebaseESP32.h>
+
+#define FIREBASE_HOST "fire-fd5da.firebaseio.com/" 
+#define FIREBASE_AUTH "eFvhsRfrdi5hNbrIcbN2EJVxc2RoXFTkByVcnIOZ"
+#define WIFI_SSID "faheem akhtar"
+#define WIFI_PASSWORD "0515557377"
+
+FirebaseData firebaseData;
+
+// defines pins numbers
+#define trigPin 13
+#define echoPin 12
+#define motorPin1 14
+#define motorPin2 27
+
+// defines variables
+long duration;
+int distance;
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  pinMode(motorPin1,OUTPUT);
+  pinMode(motorPin2,OUTPUT);
+   
+  // connect to wifi.
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.println("connecting");
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(500);
+  }
+  Serial.println();
+  Serial.print("connected: ");
+  Serial.println(WiFi.localIP());
+  Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
+  Firebase.enableClassicRequest(firebaseData, true);
+}
+
+void loop() {
+  // Clears the trigPin
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  // Sets the trigPin on HIGH state for 10 micro seconds
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  // Reads the echoPin, returns the sound wave travel time in microseconds
+  duration = pulseIn(echoPin, HIGH);
+  // Calculating the distance
+  distance= duration*0.034/2;
+  // Prints the distance on the Serial Monitor
+  Serial.print("Distance: " + distance);
+  Firebase.getInt(firebaseData, "/water level", distance);
+
+  if(distance>10)
+  {
+    digitalWrite(motorPin1,HIGH);
+    digitalWrite(motorPin2,LOW);
+  }else{
+    digitalWrite(motorPin1,LOW);
+    digitalWrite(motorPin2,LOW);
+  }
+  delay(1000);
+}
